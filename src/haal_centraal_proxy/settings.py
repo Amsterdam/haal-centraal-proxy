@@ -155,6 +155,7 @@ LOGGING = {
             "class": "logging.StreamHandler",
         },
         "audit_console": {
+            # For azure, this is replaced below.
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "audit_json",
@@ -196,6 +197,7 @@ if DEBUG:
 
 # -- Azure specific settings
 if CLOUD_ENV.startswith("azure"):
+    # Microsoft recommended abbreviation for Application Insights is `APPI`
     APPLICATIONINSIGHTS_CONNECTION_STRING = env.str("APPLICATIONINSIGHTS_CONNECTION_STRING")
     APPLICATIONINSIGHTS_AUDIT_CONNECTION_STRING: str | None = env.str(
         "APPLICATIONINSIGHTS_AUDIT_CONNECTION_STRING", None
@@ -239,6 +241,33 @@ if CLOUD_ENV.startswith("azure"):
 
         # Psycopg2Instrumentor().instrument(enable_commenter=True, commenter_options={})
         # print("Psycopg instrumentor enabled")
+
+    if APPLICATIONINSIGHTS_AUDIT_CONNECTION_STRING is not None:
+        # Configure audit logging to an extra log
+        from azure.monitor.opentelemetry.exporter import AzureMonitorLogExporter
+        from opentelemetry.sdk._logs import LoggerProvider
+        from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+
+        audit_logger_provider = LoggerProvider()
+        audit_logger_provider.add_log_record_processor(
+            BatchLogRecordProcessor(
+                AzureMonitorLogExporter(
+                    connection_string=APPLICATIONINSIGHTS_AUDIT_CONNECTION_STRING
+                )
+            )
+        )
+
+        # Attach LoggingHandler to namespaced logger
+        # same as: handler = LoggingHandler(logger_provider=audit_logger_provider)
+        LOGGING["handlers"]["audit_console"] = {
+            "level": "DEBUG",
+            "class": "opentelemetry.sdk._logs.LoggingHandler",
+            "logger_provider": audit_logger_provider,
+            "formatter": "audit_json",
+        }
+        for logger_name, logger_details in LOGGING["loggers"].items():
+            if "audit_console" in logger_details["handlers"]:
+                LOGGING["loggers"][logger_name]["handlers"] = ["audit_console", "console"]
 
 
 # -- Third party app settings
