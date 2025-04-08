@@ -11,7 +11,7 @@ ruff==0.9.7
 
 # Testing
 pytest-sugar==1.0.0
-termcolor==2.5.0
+termcolor==3.0.1
 
 # Debugging
 django-debug-toolbar==5.0.1
