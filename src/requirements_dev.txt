@@ -830,7 +830,9 @@ requests-mock==1.12.1 \
 requests-oauthlib==2.0.0 \
     --hash=sha256:7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36 \
     --hash=sha256:b3dffaebd884d8cd778494369603a9e7b58d29111bf6b41bdc2dcd87203af4e9
-    # via msrest
+    # via
+    #   -r ./requirements.in
+    #   msrest
 ruff==0.11.7 \
     --hash=sha256:07f1496ad00a4a139f4de220b0c97da6d4c85e0e4aa9b2624167b7d4d44fd6b6 \
     --hash=sha256:0a931d85959ceb77e92aea4bbedfded0a31534ce191252721128f77e5ae1f98a \

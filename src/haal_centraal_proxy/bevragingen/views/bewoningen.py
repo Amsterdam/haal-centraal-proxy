@@ -12,7 +12,7 @@ class BrpBewoningenView(BaseProxyView):
     """
 
     service_log_id = "bewoningen"
-    endpoint_url = settings.HAAL_CENTRAAL_BRP_BEWONINGEN_URL
+    endpoint_url = settings.BRP_BEWONINGEN_URL
 
     # Require extra scopes
     needed_scopes = {"benk-brp-bewoning-api"}

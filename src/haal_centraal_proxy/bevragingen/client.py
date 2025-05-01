@@ -2,12 +2,16 @@
 
 import logging
 import time
+from typing import TypedDict
 from urllib.parse import urlparse
 
 import orjson
 import requests
+from django.core.cache import cache
 from more_ds.network.url import URL
+from oauthlib.oauth2 import BackendApplicationClient
 from requests import Timeout
+from requests_oauthlib import OAuth2Session
 from rest_framework import status
 from rest_framework.exceptions import APIException, NotFound
 
@@ -18,7 +22,14 @@ logger = logging.getLogger(__name__)
 USER_AGENT = "Amsterdam-Haal-Centraal-Proxy/1.0"
 
 
-class HaalCentraalClient:
+class OAuthToken(TypedDict):
+    token_type: str  # bearer
+    access_token: str
+    expires_in: int
+    scope: str
+
+
+class BrpClient:
     """Haal Centraal API client.
 
     When a reference to the client is kept globally,
@@ -27,50 +38,124 @@ class HaalCentraalClient:
 
     endpoint_url: URL
 
-    def __init__(self, endpoint_url, api_key, cert_file=None, key_file=None):
+    def __init__(
+        self,
+        endpoint_url,
+        *,
+        oauth_endpoint_url: str | None = None,
+        oauth_client_id: str | None = None,
+        oauth_client_secret: str | None = None,
+        oauth_scope: str | None = None,
+        cert_file=None,
+        key_file=None,
+    ):
         """Initialize the client configuration.
 
-        :param endpoint_url: Full URL of the Haal Centraal service
-        :param api_key: The API key to use
+        :param endpoint_url: Full URL of the Haal Centraal service.
+        :param oauth_endpoint_url: Full URL to the Diginetwerk OAuth service.
+        :param oauth_client_id: Client ID for OAuth calls.
+        :param oauth_client_secret: Client secret for OAuth calls.
+        :param oauth_scope: OAuth scope to request,
+            should be Organization Identification Number (OIN),
+            found in the PKI-overheid certificate.
         :param cert_file: Optional certificate file for mTLS (needed in production).
         :param key_file: Optional private key file for mTLS (needed in production).
         """
         if not endpoint_url:
-            raise ValueError("Missing Haal Centraal base_url")
+            raise ValueError("Missing BRP endpoint URL")
         self.endpoint_url = URL(endpoint_url)
-        self._api_key = api_key
+        self.oauth_endpoint_url = oauth_endpoint_url
         self._host = urlparse(endpoint_url).netloc
-        self._session = requests.Session()
+
+        if urlparse(endpoint_url).port and not oauth_client_secret:
+            # Connecting to the mock endpoint
+            self._client_secret = None
+            self._session = requests.Session()
+        else:
+            if not oauth_endpoint_url:
+                raise ValueError("Missing BRP OAuth endpoint URL")
+            if not oauth_client_id:
+                raise ValueError("Missing BRP OAuth client ID")
+            if not oauth_client_secret:
+                raise ValueError("Missing BRP OAuth client secret")
+
+            # Connecting to official API on the private 'diginetwerk'.
+            self._client_secret = oauth_client_secret
+
+            # Get existing token from configured cache (e.g. locmemcache)
+            # to avoid needing reauthentication.
+            token = cache.get("haal-centraal-token")
+
+            # The requests-oauthlib logic will automatically insert the token data.
+            self._session = OAuth2Session(
+                # The BackendApplicationClient gives grant_type=authorization_code
+                client=BackendApplicationClient(client_id=oauth_client_id),
+                scope=oauth_scope,
+                token=token,
+                token_updater=self._cache_token,  # only called for refresh urls.
+            )
+
         if cert_file is not None:
             self._session.cert = (cert_file, key_file)
+
+    def fetch_token(self) -> OAuthToken:
+        """Retrieve the access token.
+        This is a server-side OAuth call, which doesn't redirect the user.
+        It but immediately returns the token.
+        """
+        # The retrieved token is also stored in self._session.token.
+        token = self._session.fetch_token(
+            self.oauth_endpoint_url,
+            client_secret=self._client_secret,
+            resourceServer="ResourceServer01",
+            headers={
+                "Accept": "application/json; charset=utf-8",
+                "User-Agent": USER_AGENT,
+            },
+        )
+        self._cache_token(token)
+        return token
+
+    def _cache_token(self, token: OAuthToken):
+        """Save the retrieved token."""
+        # make sure the cache is expired when refreshes are needed.
+        timeout = token["expires_in"] - 900
+        logger.debug("Caching OAuth access token for %d seconds", timeout)
+        cache.set("haal-centraal-token", token, timeout=timeout)
 
     def call(self, hc_request: dict | None = None) -> requests.Response:
         """Make an HTTP GET call. kwargs are passed to pool.request."""
         logger.debug("calling %s", self.endpoint_url)
         t0 = time.perf_counter_ns()
+        host = None
         try:
+            # Request the token if needed
+            if self._client_secret is not None and not self._session.token:
+                logger.debug("No OAuth token stored yet, retrieving new OAuth token")
+                host = self.oauth_endpoint_url
+                self.fetch_token()
+
             # Using urllib directly instead of requests for performance
+            host = self._host
             response: requests.Response = self._session.request(
                 "POST",
                 self.endpoint_url,
                 json=hc_request,
                 timeout=60,
                 headers={
+                    # "Authorization": "Bearer <oauthtoken>" is inserted by requests-oauthlib
                     "Accept": "application/json; charset=utf-8",
                     "Content-Type": "application/json; charset=utf-8",
-                    "X-API-Key": self._api_key,
                     "User-Agent": USER_AGENT,
                 },
             )
         except (TimeoutError, Timeout) as e:
             # Socket timeout
-            logger.error("Proxy call to %s failed, timeout from remote server: %s", self._host, e)
+            logger.error("Proxy call to %s failed, timeout from remote server: %s", host, e)
             raise GatewayTimeout() from e
         except OSError as e:
             # Socket connect / SSL error.
-            logger.error(
-                "Proxy call to %s failed, error when connecting to server: %s", self._host, e
-            )
+            logger.error("Proxy call to %s failed, error when connecting to server: %s", host, e)
             raise ServiceUnavailable(str(e)) from e
 
         # Log response and timing results
