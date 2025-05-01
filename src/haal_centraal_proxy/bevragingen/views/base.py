@@ -16,7 +16,7 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 
 from haal_centraal_proxy.bevragingen import authentication, encryption, permissions, types
-from haal_centraal_proxy.bevragingen.client import HaalCentraalClient
+from haal_centraal_proxy.bevragingen.client import BrpClient
 from haal_centraal_proxy.bevragingen.exceptions import ProblemJsonException
 from haal_centraal_proxy.bevragingen.permissions import ParameterPolicy
 
@@ -34,7 +34,7 @@ class BaseProxyView(APIView):
     """
 
     #: Define which additional scopes are needed
-    client_class = HaalCentraalClient
+    client_class = BrpClient
 
     authentication_classes = [authentication.JWTAuthentication]
 
@@ -79,13 +79,16 @@ class BaseProxyView(APIView):
                 f"A required header is missing: {e.args[0]}", code="missingHeaders"
             ) from None
 
-    def get_client(self) -> HaalCentraalClient:
-        """Provide the Haal Centraal client. This can be overwritten per view if needed."""
+    def get_client(self) -> BrpClient:
+        """Provide the API client class. This can be overwritten per view if needed."""
         return self.client_class(
             endpoint_url=self.endpoint_url,
-            api_key=settings.HAAL_CENTRAAL_API_KEY,
-            cert_file=settings.HAAL_CENTRAAL_CERT_FILE,
-            key_file=settings.HAAL_CENTRAAL_KEY_FILE,
+            oauth_endpoint_url=settings.BRP_OAUTH_TOKEN_URL,
+            oauth_client_id=settings.BRP_OAUTH_CLIENT_ID,
+            oauth_client_secret=settings.BRP_OAUTH_CLIENT_SECRET,
+            oauth_scope=settings.BRP_OAUTH_SCOPE,
+            cert_file=settings.BRP_MTLS_CERT_FILE,
+            key_file=settings.BRP_MTLS_KEY_FILE,
         )
 
     def get_permissions(self):

@@ -58,7 +58,7 @@ class TestBrpPersonenView:
     def test_postcode_search(self, api_client, requests_mock, common_headers):
         """Prove that search is possible"""
         requests_mock.post(
-            "/haalcentraal/api/brp/personen",
+            "/lap/api/brp",
             json=self.RESPONSE_POSTCODE_HUISNUMMER,
             headers={"content-type": "application/json"},
         )
@@ -111,7 +111,7 @@ class TestBrpPersonenView:
     def test_transform_include_nulls_zipcode(self, api_client, requests_mock, common_headers):
         """Prove that search is possible"""
         requests_mock.post(
-            "/haalcentraal/api/brp/personen",
+            "/lap/api/brp",
             json=self.RESPONSE_POSTCODE_HUISNUMMER,
             headers={"content-type": "application/json"},
         )
@@ -173,7 +173,7 @@ class TestBrpPersonenView:
     def test_transform_include_nulls_bsn(self, api_client, requests_mock, common_headers):
         """Prove that search is possible"""
         requests_mock.post(
-            "/haalcentraal/api/brp/personen",
+            "/lap/api/brp",
             json=self.RESPONSE_BSN,
             headers={"content-type": "application/json"},
         )
@@ -449,7 +449,7 @@ class TestBrpPersonenView:
             "geheimhoudingPersoonsgegevens": "1",
         }
         requests_mock.post(
-            "/haalcentraal/api/brp/personen",
+            "/lap/api/brp",
             json={
                 "type": "ZoekMetPostcodeEnHuisnummer",
                 "personen": [person1, person2],
@@ -507,7 +507,7 @@ class TestBrpPersonenView:
             )
 
         requests_mock.post(
-            "/haalcentraal/api/brp/personen",
+            "/lap/api/brp",
             json={
                 "type": "ZoekMetPostcodeEnHuisnummer",
                 "personen": [

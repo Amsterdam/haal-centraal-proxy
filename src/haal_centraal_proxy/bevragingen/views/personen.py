@@ -68,7 +68,7 @@ class BrpPersonenView(BaseProxyView):
     """
 
     service_log_id = "personen"
-    endpoint_url = settings.HAAL_CENTRAAL_BRP_URL
+    endpoint_url = settings.BRP_PERSONEN_URL
 
     # Require extra scopes
     needed_scopes = {"benk-brp-personen-api"}

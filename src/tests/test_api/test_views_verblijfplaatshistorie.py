@@ -39,8 +39,7 @@ class TestBrpVerblijfplaatshistorieView:
     def test_bsn_date_search(self, api_client, requests_mock, common_headers):
         """Prove that search is possible"""
         requests_mock.post(
-            # https://demo-omgeving.haalcentraal.nl
-            "/haalcentraal/api/brphistorie/verblijfplaatshistorie",
+            "/lap/api/brp/verblijfplaatshistorie",
             json=self.RESPONSE_VERBLIJFPLAATS,
             headers={"content-type": "application/json"},
         )

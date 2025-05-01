@@ -119,12 +119,11 @@ response will be returned.
 
 The following URLs are available:
 
-| API                                      | Description                              | Setting for Proxy URL                           | Docs                                                                     |
-|------------------------------------------|------------------------------------------|-------------------------------------------------|--------------------------------------------------------------------------|
-| `/bevragingen/v1/personen`               | Person details.                          | `HAAL_CENTRAAL_BRP_PERSONEN_URL`                | [docs](https://brp-api.github.io/Haal-Centraal-BRP-bevragen/)            |
-| `/bevragingen/v1/bewoningen`             | Who lived at an address.                 | `HAAL_CENTRAAL_BRP_BEWONINGEN_URL`              | [docs](https://brp-api.github.io/Haal-Centraal-BRP-bewoning/)            |
-| `/bevragingen/v1/verblijfplaatshistorie` | All addresses where someone lived.       | `HAAL_CENTRAAL_BRP_VERBLIJFPLAATS_HISTORIE_URL` | [docs](https://brp-api.github.io/Haal-Centraal-BRP-historie-bevragen/)   |
-
+| API                                      | Description                              | Setting for Proxy URL            | Docs                                                                      |
+|------------------------------------------|------------------------------------------|----------------------------------|---------------------------------------------------------------------------|
+| `/bevragingen/v1/personen`               | Person details.                          | `BRP_PERSONEN_URL`               | [docs](https://brp-api.github.io/Haal-Centraal-BRP-bevragen/)             |
+| `/bevragingen/v1/bewoningen`             | Who lived at an address.                 | `BRP_BEWONINGEN_URL`             | [docs](https://brp-api.github.io/Haal-Centraal-BRP-bewoning/)             |
+| `/bevragingen/v1/verblijfplaatshistorie` | All addresses where someone lived.       | `BRP_VERBLIJFPLAATSHISTORIE_URL` | [docs](https://brp-api.github.io/Haal-Centraal-BRP-historie-bevragen/)    |
 
 ## Environment Settings
 
@@ -136,31 +135,36 @@ The following environment variables are useful for configuring a local developme
 * `DJANGO_LOG_LEVEL` log level for Django internals (default is `INFO`).
 * `PUB_JWKS` allows to give publically readable JSON Web Key Sets in JSON format (good default: `jq -c < src/jwks_test.json`).
 
-Connections:
+### Connections
 
-* `HAAL_CENTRAAL_BRP_PERSONEN_URL` endpoint for the Haal Centraal BRP Personen API.
-* `HAAL_CENTRAAL_BRP_BEWONINGEN_URL` endpoint for the BRP occupancy URL.
-* `HAAL_CENTRAAL_BRP_VERBLIJFPLAATS_HISTORIE_URL` endpoint for the address history URL.
-* `HAAL_CENTRAAL_API_KEY` the API key for Haal Centraal
-* `HAAL_CENTRAAL_CERT_FILE` the mTLS certificate for Haal Centraal.
-* `HAAL_CENTRAAL_KEY_FILE` the mTLS key file for Haal Centraal.
+* `BRP_OAUTH_TOKEN_URL` should be the endpoint for requesting OAuth tokens.
+* `BRP_URL` base endpoint for the BRP API's. This also works as default for the endpoints:
+  * `BRP_PERSONEN_URL` endpoint for the Haal Centraal BRP Personen API.
+  * `BRP_BEWONINGEN_URL` endpoint for the BRP occupancy URL.
+  * `VERBLIJFPLAATSHISTORIE_URL` endpoint for the address history URL.
+* `BRP_MTLS_CERT_FILE` the mTLS client certificate.
+* `BRP_MTLS_KEY_FILE` the mTLS client key file.
 
-Deployment:
+The values for these can be found in the [Aansluitinstructies via Diginetwerk voor de stelselapplicaties](https://www.rvig.nl/Aansluitinstructies-Diginetwerk-voor-stelselapplicaties).
+
+### Deployment
 
 * `ALLOWED_HOSTS` will limit which domain names can connect.
 * `AZURE_APPI_CONNECTION_STRING` Azure Insights configuration.
 * `AZURE_APPI_AUDIT_CONNECTION_STRING` Same, for a special audit logging.
 * `CLOUD_ENV=azure` will enable Azure-specific telemetry.
+* `CACHE_URL` allows to define a cache for OAuth tokens (default is using local momory).
 * `STATIC_URL` defines the base URL for static files (e.g. to point to a CDN).
 * `OAUTH_JWKS_URL` point to a public JSON Web Key Set, e.g. `https://login.microsoftonline.com/{tenant_uuid or 'common'}/discovery/v2.0/keys`.
 * `OAUTH_CHECK_CLAIMS` should be `aud=AUDIENCE-IN-TOKEN,iss=ISSUER-IN-TOKEN`.
 
-Hardening deployment:
+### Hardening deployment
 
 * `SESSION_COOKIE_SECURE` is already true in production.
 * `CSRF_COOKIE_SECURE` is already true in production.
 * `SECRET_KEY` is used for various encryption code.
 * `CORS_ALLOW_ALL_ORIGINS` can be true/false to allow all websites to connect.
+* `CORS_ALLOW_HEADERS` allows additional headers in the request.
 * `CORS_ALLOWED_ORIGINS` allows a list of origin URLs to use.
 * `CORS_ALLOWED_ORIGIN_REGEXES` supports a list of regex patterns fow allowed origins.
 * `HAAL_CENTRAAL_BRP_ENCRYPTION_SALTS` a list of salts used to encrypt data. The first item will be used to encrypt

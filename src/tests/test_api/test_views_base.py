@@ -33,12 +33,12 @@ class TestBaseProxyView:
     def test_invalid_api_key(self, api_client, requests_mock, caplog, common_headers):
         """Prove that incorrect API-key settings are handled gracefully."""
         requests_mock.post(
-            "/haalcentraal/api/brp/personen",
+            "/lap/api/brp",
             json={
                 "type": "https://datatracker.ietf.org/doc/html/rfc7235#section-3.1",
                 "title": "Niet correct geauthenticeerd.",
                 "status": 401,
-                "instance": "/haalcentraal/api/brp/personen",
+                "instance": "/lap/api/brp",
                 "code": "authentication",
             },
             status_code=401,
@@ -112,7 +112,7 @@ class TestBaseProxyView:
     def test_error_response(self, api_client, requests_mock, caplog, common_headers):
         """Prove that Haal Centraal errors are handled gracefully."""
         requests_mock.post(
-            "/haalcentraal/api/brp/personen",
+            "/lap/api/brp",
             json={
                 "invalidParams": [
                     {
@@ -125,7 +125,7 @@ class TestBaseProxyView:
                 "title": "Een of meerdere parameters zijn niet correct.",
                 "status": 400,
                 "detail": "De foutieve parameter(s) zijn: burgerservicenummer.",
-                "instance": "/haalcentraal/api/brp/personen",
+                "instance": "/lap/api/brp",
                 "code": "paramsValidation",
             },
             status_code=400,

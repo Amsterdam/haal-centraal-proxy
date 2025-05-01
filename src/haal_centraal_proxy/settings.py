@@ -322,29 +322,34 @@ DATAPUNT_AUTHZ = {
 
 # -- Local app settings
 
+# These OAuth settings are for authenticating the backend with the BRP OAuth endpoint.
+# Not to be confused with the settings for validating the client token (OAUTH_JWKS_URL above).
 if _USE_SECRET_STORE or CLOUD_ENV.startswith("azure"):
-    HAAL_CENTRAAL_API_KEY = Path("/mnt/secrets-store/haal-centraal-proxy-key").read_text()
+    BRP_OAUTH_CLIENT_SECRET = Path("/mnt/secrets-store/brp-rvig-client-secret").read_text()
 else:
-    HAAL_CENTRAAL_API_KEY = env.str("HAAL_CENTRAAL_API_KEY", "")
+    BRP_OAUTH_CLIENT_SECRET = env.str("BRP_OAUTH_CLIENT_SECRET", default="")
 
-# mTLS client certificate for Haal Centraal BRK.
-HAAL_CENTRAAL_KEY_FILE = env.str("HAAL_CENTRAAL_KEY_FILE", None)
-HAAL_CENTRAAL_CERT_FILE = env.str("HAAL_CENTRAAL_CERT_FILE", None)
+BRP_OAUTH_CLIENT_ID = env.str("BRP_OAUTH_CLIENT_ID", default=None)
+BRP_OAUTH_SCOPE = env.str("BRP_OAUTH_SCOPE", "00000001002564440000")  # OIN of Gemeente Amsterdam
 
-HAAL_CENTRAAL_BRP_URL = env.str(
-    "HAAL_CENTRAAL_BRP_PERSONEN_URL",
-    default=env.str(
-        "HAAL_CENTRAAL_BRP_URL",  # Allow old name too.
-        "https://proefomgeving.haalcentraal.nl/haalcentraal/api/brp/personen",
-    ),
+# mTLS client certificate for production
+BRP_MTLS_KEY_FILE = env.str("BRP_MTLS_KEY_FILE", None)
+BRP_MTLS_CERT_FILE = env.str("BRP_MTLS_CERT_FILE", None)
+
+# https://www.rvig.nl/Aansluitinstructies-Diginetwerk-voor-stelselapplicaties
+# Proefomgeving URLs (NPR: Niet Productie):
+BRP_OAUTH_TOKEN_URL = env.str(
+    "BRP_OAUTH_TOKEN_URL",
+    default="https://auth.npr.idm.diginetwerk.net/nidp/oauth/nam/token",
 )
-HAAL_CENTRAAL_BRP_BEWONINGEN_URL = env.str(
-    "HAAL_CENTRAAL_BRP_BEWONINGEN_URL",
-    "https://demo-omgeving.haalcentraal.nl/haalcentraal/api/bewoning/bewoningen",
+BRP_URL = env.str(
+    "BRP_URL",
+    default="https://apigw.npr.idm.diginetwerk.net/lap/api/brp",
 )
-HAAL_CENTRAAL_BRP_VERBLIJFPLAATS_HISTORIE_URL = env.str(
-    "HAAL_CENTRAAL_BRP_VERBLIJFPLAATS_HISTORIE_URL",
-    "https://demo-omgeving.haalcentraal.nl/haalcentraal/api/brphistorie/verblijfplaatshistorie",
+BRP_PERSONEN_URL = env.str("BRP_PERSONEN_URL", default=BRP_URL)
+BRP_BEWONINGEN_URL = env.str("BRP_BEWONINGEN_URL", default=f"{BRP_URL}/bewoning")
+BRP_VERBLIJFPLAATSHISTORIE_URL = env.str(
+    "BRP_VERBLIJFPLAATSHISTORIE_URL", default=f"{BRP_URL}/verblijfplaatshistorie"
 )
 
 # Muse be a URL-safe base64-encoded 32-byte key

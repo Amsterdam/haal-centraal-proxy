@@ -12,7 +12,7 @@ class BrpVerblijfplaatshistorieView(BaseProxyView):
     """
 
     service_log_id = "verblijfplaatshistorie"
-    endpoint_url = settings.HAAL_CENTRAAL_BRP_VERBLIJFPLAATS_HISTORIE_URL
+    endpoint_url = settings.BRP_VERBLIJFPLAATSHISTORIE_URL
 
     # Require extra scopes
     needed_scopes = {"benk-brp-verblijfplaatshistorie-api"}
