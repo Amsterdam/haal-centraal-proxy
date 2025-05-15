@@ -7,11 +7,11 @@ pip-tools==7.4.1
 # Linting
 pre-commit==4.2.0
 black==25.1.0
-ruff==0.11.7
+ruff==0.11.9
 
 # Testing
 pytest-sugar==1.0.0
-termcolor==3.0.1
+termcolor==3.1.0
 
 # Debugging
 django-debug-toolbar==5.2.0
