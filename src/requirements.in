@@ -1,4 +1,4 @@
-Django == 5.1.9
+Django == 5.2.1
 django-environ == 0.12.0
 django-cors-headers == 4.7.0
 django-healthchecks == 1.5.0
@@ -13,13 +13,13 @@ orjson == 3.10.18
 whitenoise == 6.9.0
 
 # Monitoring
-azure-monitor-opentelemetry == 1.6.9
+azure-monitor-opentelemetry == 1.6.10
 azure-identity == 1.23.0
 uwsgitop == 0.12
 uwsgi-readiness-check == 0.2.0
 
 # Testing
-pytest == 8.3.5
+pytest == 8.4.0
 pytest-django == 4.11.1
 pytest-cov == 6.1.1
 python-owasp-zap-v2.4 == 0.1.0
